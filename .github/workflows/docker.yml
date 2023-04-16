@@ -27,4 +27,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/movieservice:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/bingebuster-movieservice:latest
