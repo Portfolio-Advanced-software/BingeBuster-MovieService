@@ -208,7 +208,7 @@ func (s *MovieServiceServer) DeleteMovie(ctx context.Context, req *moviepb.Delet
 }
 
 const (
-	port = ":50051"
+	port = ":50055"
 )
 
 var db *mongo.Client
@@ -217,7 +217,7 @@ var mongoCtx context.Context
 
 var mongoUsername = "user-service"
 var mongoPwd = "vLxxhmS0eJFwmteF"
-var connUri = "mongodb+srv://" + mongoUsername + ":" + mongoPwd + "@cluster0.fpedw5d.mongodb.net/test"
+var connUri = "mongodb+srv://" + mongoUsername + ":" + mongoPwd + "@cluster0.fpedw5d.mongodb.net/"
 
 var dbName = "MovieService"
 var collectionName = "Movies"
@@ -226,7 +226,7 @@ func main() {
 	// Configure 'log' package to give file name and line number on eg. log.Fatal
 	// Pipe flags to one another (log.LstdFLags = log.Ldate | log.Ltime)
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	fmt.Println("Starting server on port :50051...")
+	fmt.Println("Starting server on port :50055...")
 
 	// Set listener to start server
 	lis, err := net.Listen("tcp", port)
@@ -256,7 +256,7 @@ func main() {
 			log.Fatalf("Failed to serve: %v", err)
 		}
 	}()
-	fmt.Println("Server succesfully started on port :50051")
+	fmt.Println("Server succesfully started on port :50055")
 
 	// Right way to stop the server using a SHUTDOWN HOOK
 	// Create a channel to receive OS signals
