@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 
+	env "github.com/Portfolio-Advanced-software/BingeBuster-MovieService/config"
 	models "github.com/Portfolio-Advanced-software/BingeBuster-MovieService/models"
 	mongodb "github.com/Portfolio-Advanced-software/BingeBuster-MovieService/mongodb"
 	moviepb "github.com/Portfolio-Advanced-software/BingeBuster-MovieService/proto"
@@ -215,13 +216,6 @@ var db *mongo.Client
 var moviedb *mongo.Collection
 var mongoCtx context.Context
 
-var mongoUsername = "user-service"
-var mongoPwd = "vLxxhmS0eJFwmteF"
-var connUri = "mongodb+srv://" + mongoUsername + ":" + mongoPwd + "@cluster0.fpedw5d.mongodb.net/"
-
-var dbName = "MovieService"
-var collectionName = "Movies"
-
 func main() {
 	// Configure 'log' package to give file name and line number on eg. log.Fatal
 	// Pipe flags to one another (log.LstdFLags = log.Ldate | log.Ltime)
@@ -244,12 +238,22 @@ func main() {
 	// Register the service with the server
 	moviepb.RegisterMovieServiceServer(s, srv)
 
+	// Retrieve values from environment variables
+	mongodbUser := env.GoDotEnvVariable("MONGODB_USER")
+	mongodbPwd := env.GoDotEnvVariable("MONGODB_PWD")
+	mongodbCluster := env.GoDotEnvVariable("MONGODB_CLUSTER")
+	mongodbDb := env.GoDotEnvVariable("MONGODB_DB")
+	mongodbCollection := env.GoDotEnvVariable("MONGODB_COLLECTION")
+
+	// Construct the RabbitMQ URL
+	mongodbURL := fmt.Sprintf("mongodb+srv://%s:%s%s", mongodbUser, mongodbPwd, mongodbCluster)
+
 	// Initialize MongoDb client
 	fmt.Println("Connecting to MongoDB...")
-	db = mongodb.ConnectToMongoDB(connUri)
+	db = mongodb.ConnectToMongoDB(mongodbURL)
 
 	// Bind our collection to our global variable for use in other methods
-	moviedb = db.Database(dbName).Collection(collectionName)
+	moviedb = db.Database(mongodbDb).Collection(mongodbCollection)
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
