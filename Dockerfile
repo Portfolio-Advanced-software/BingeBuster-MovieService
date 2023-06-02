@@ -13,6 +13,10 @@ RUN go get -d -v ./...
 # Build the Go app
 RUN go build -o app
 
+# Create a non-root user and switch to that user
+RUN adduser -D movie-service
+USER movie-service
+
 # Expose port 50055 for the application
 EXPOSE 50055
 
