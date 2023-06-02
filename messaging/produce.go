@@ -2,27 +2,13 @@ package messaging
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
-	env "github.com/Portfolio-Advanced-software/BingeBuster-MovieService/config"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func ProduceMessage(message string, queue string) {
-
-	// Retrieve values from environment variables
-	rabbitmqUser := env.GoDotEnvVariable("RABBITMQ_USER")
-	rabbitmqPwd := env.GoDotEnvVariable("RABBITMQ_PWD")
-
-	// Construct the RabbitMQ URL
-	rabbitmqURL := fmt.Sprintf("amqps://%s:%s@rattlesnake.rmq.cloudamqp.com/%s", rabbitmqUser, rabbitmqPwd, rabbitmqUser)
-
-	conn, err := amqp.Dial(rabbitmqURL)
-	FailOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
-
+func ProduceMessage(conn *amqp.Connection, message string, queue string) {
 	ch, err := conn.Channel()
 	FailOnError(err, "Failed to open a channel")
 	defer ch.Close()

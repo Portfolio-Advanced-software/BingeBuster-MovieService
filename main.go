@@ -9,6 +9,7 @@ import (
 	"os/signal"
 
 	env "github.com/Portfolio-Advanced-software/BingeBuster-MovieService/config"
+	"github.com/Portfolio-Advanced-software/BingeBuster-MovieService/messaging"
 	models "github.com/Portfolio-Advanced-software/BingeBuster-MovieService/models"
 	mongodb "github.com/Portfolio-Advanced-software/BingeBuster-MovieService/mongodb"
 	moviepb "github.com/Portfolio-Advanced-software/BingeBuster-MovieService/proto"
@@ -216,6 +217,13 @@ var db *mongo.Client
 var moviedb *mongo.Collection
 var mongoCtx context.Context
 
+// Retrieve values from environment variables
+var rabbitmqUser = env.GoDotEnvVariable("RABBITMQ_USER")
+var rabbitmqPwd = env.GoDotEnvVariable("RABBITMQ_PWD")
+
+// Construct the RabbitMQ URL
+var rabbitmqURL = fmt.Sprintf("amqps://%s:%s@rattlesnake.rmq.cloudamqp.com/%s", rabbitmqUser, rabbitmqPwd, rabbitmqUser)
+
 func main() {
 	// Configure 'log' package to give file name and line number on eg. log.Fatal
 	// Pipe flags to one another (log.LstdFLags = log.Ldate | log.Ltime)
@@ -262,6 +270,8 @@ func main() {
 	}()
 	fmt.Println("Server succesfully started on port :50055")
 
+	conn, err := messaging.ConnectToRabbitMQ(rabbitmqURL)
+	messaging.ProduceMessage(conn, "hoi", "hoi")
 	// Right way to stop the server using a SHUTDOWN HOOK
 	// Create a channel to receive OS signals
 	c := make(chan os.Signal)
