@@ -8,7 +8,7 @@ import (
 	"os"
 	"os/signal"
 
-	env "github.com/Portfolio-Advanced-software/BingeBuster-MovieService/config"
+	"github.com/Portfolio-Advanced-software/BingeBuster-MovieService/config"
 	models "github.com/Portfolio-Advanced-software/BingeBuster-MovieService/models"
 	mongodb "github.com/Portfolio-Advanced-software/BingeBuster-MovieService/mongodb"
 	moviepb "github.com/Portfolio-Advanced-software/BingeBuster-MovieService/proto"
@@ -208,10 +208,6 @@ func (s *MovieServiceServer) DeleteMovie(ctx context.Context, req *moviepb.Delet
 	}, nil
 }
 
-const (
-	port = ":50055"
-)
-
 var db *mongo.Client
 var moviedb *mongo.Collection
 var mongoCtx context.Context
@@ -224,13 +220,19 @@ var mongoCtx context.Context
 // var rabbitmqURL = fmt.Sprintf("amqps://%s:%s@rattlesnake.rmq.cloudamqp.com/%s", rabbitmqUser, rabbitmqPwd, rabbitmqUser)
 
 func main() {
+	c, err := config.LoadConfig()
+
+	if err != nil {
+		log.Fatalln("Failed at config", err)
+	}
+
 	// Configure 'log' package to give file name and line number on eg. log.Fatal
 	// Pipe flags to one another (log.LstdFLags = log.Ldate | log.Ltime)
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	fmt.Println("Starting server on port :50055...")
+	fmt.Println("Starting server on port " + c.Port)
 
 	// Set listener to start server
-	lis, err := net.Listen("tcp", port)
+	lis, err := net.Listen("tcp", c.Port)
 	if err != nil {
 		log.Fatalf("Unable to listen on port %p: %v", lis.Addr(), err)
 	}
@@ -245,44 +247,37 @@ func main() {
 	// Register the service with the server
 	moviepb.RegisterMovieServiceServer(s, srv)
 
-	// Retrieve values from environment variables
-	mongodbUser := env.GoDotEnvVariable("MONGODB_USER")
-	mongodbPwd := env.GoDotEnvVariable("MONGODB_PWD")
-	mongodbCluster := env.GoDotEnvVariable("MONGODB_CLUSTER")
-	mongodbDb := env.GoDotEnvVariable("MONGODB_DB")
-	mongodbCollection := env.GoDotEnvVariable("MONGODB_COLLECTION")
-
 	// Construct the MongoDB URL
-	mongodbURL := fmt.Sprintf("mongodb+srv://%s:%s%s", mongodbUser, mongodbPwd, mongodbCluster)
+	mongodbURL := fmt.Sprintf("mongodb+srv://%s:%s@%s", c.MongoDBUser, c.MongoDBPwd, c.MongoDBCluster)
 
 	// Initialize MongoDb client
 	fmt.Println("Connecting to MongoDB...")
 	db = mongodb.ConnectToMongoDB(mongodbURL)
 
 	// Bind our collection to our global variable for use in other methods
-	moviedb = db.Database(mongodbDb).Collection(mongodbCollection)
+	moviedb = db.Database(c.MongoDBDb).Collection(c.MongoDBCollection)
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			log.Fatalf("Failed to serve: %v", err)
 		}
 	}()
-	fmt.Println("Server succesfully started on port :50055")
+	fmt.Println("Server succesfully started on port" + c.Port)
 
 	// conn, err := messaging.ConnectToRabbitMQ(rabbitmqURL)
 	// messaging.ProduceMessage(conn, "hoi", "hoi")
 
 	// Right way to stop the server using a SHUTDOWN HOOK
 	// Create a channel to receive OS signals
-	c := make(chan os.Signal)
+	cs := make(chan os.Signal)
 
 	// Relay os.Interrupt to our channel (os.Interrupt = CTRL+C)
 	// Ignore other incoming signals
-	signal.Notify(c, os.Interrupt)
+	signal.Notify(cs, os.Interrupt)
 
 	// Block main routine until a signal is received
 	// As long as user doesn't press CTRL+C a message is not passed and our main routine keeps running
-	<-c
+	<-cs
 
 	// After receiving CTRL+C Properly stop the server
 	fmt.Println("\nStopping the server...")

@@ -1,18 +1,32 @@
 package config
 
-import (
-	"log"
-	"os"
+import "github.com/spf13/viper"
 
-	"github.com/joho/godotenv"
-)
+type Config struct {
+	Port              string `mapstructure:"PORT"`
+	MongoDBUser       string `mapstructure:"MONGODB_USER"`
+	MongoDBPwd        string `mapstructure:"MONGODB_PWD"`
+	MongoDBCluster    string `mapstructure:"MONGODB_CLUSTER"`
+	MongoDBDb         string `mapstructure:"MONGODB_DB"`
+	MongoDBCollection string `mapstructure:"MONGODB_COLLECTION"`
+	RabbitMQUser      string `mapstructure:"RABBITMQ_USER"`
+	RabbitMQPwd       string `mapstructure:"RABBITMQ_PWD"`
+}
 
-func GoDotEnvVariable(key string) string {
-	// Load .env file
-	err := godotenv.Load("./config/.env")
+func LoadConfig() (config Config, err error) {
+	viper.AddConfigPath("./config/")
+	viper.SetConfigName("dev")
+	viper.SetConfigType("env")
+
+	viper.AutomaticEnv()
+
+	err = viper.ReadInConfig()
+
 	if err != nil {
-		log.Fatalf("Error loading .env file")
+		return
 	}
 
-	return os.Getenv(key)
+	err = viper.Unmarshal(&config)
+
+	return
 }
