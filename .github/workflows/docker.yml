@@ -75,4 +75,4 @@ jobs:
 
       - name: Update image in Kubernetes Cluster
         run: |
-          kubectl set image deployment/movie-service movie-service=milofow/bingebuster-movieservice:latest
+          kubectl rollout restart deployment/movie-service
